@@ -1,5 +1,5 @@
 // Netlify Function: get-details.js
-// 最终调试版：增加了详细的日志记录功能
+// 最终修正版：解决了API冲突，并优化了错误处理
 
 exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') {
@@ -19,33 +19,21 @@ exports.handler = async function(event, context) {
     }
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
+    // 新的、更灵活的指令
     const prompt = `For the food "${foodName}", find values for the following nutrients: ${nutrientsToFetch.join(', ')}.
-    Your response MUST be a valid JSON object.
+    Your response MUST be ONLY a single, valid JSON object string.
     The keys in the JSON MUST be the exact nutrient names from the list.
     If you cannot find a value for a specific nutrient, the value for that key MUST be the string "网络查询中暂无".
-    Do not include any text or explanations outside of the JSON object.`;
+    Do not include any text, explanations, or markdown formatting like \`\`\`json outside of the JSON object.`;
             
-    const schemaProperties = {};
-    nutrientsToFetch.forEach(name => {
-        schemaProperties[name] = { "type": "STRING" };
-    });
-
+    // 移除了冲突的 generationConfig
     const payload = {
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        tools: [{ "google_search": {} }],
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: "OBJECT",
-                properties: schemaProperties,
-            }
-        }
+        tools: [{ "google_search": {} }], 
     };
 
-    // --- DEBUG LOGGING START ---
-    console.log(`[INFO] Sending request for food: "${foodName}"`);
-    console.log("[INFO] Payload sent to Gemini:", JSON.stringify(payload, null, 2));
-    // --- DEBUG LOGGING END ---
+    console.log(`[INFO] Sending NEW request for food: "${foodName}"`);
+    console.log("[INFO] NEW Payload sent to Gemini:", JSON.stringify(payload, null, 2));
 
     const response = await fetch(apiUrl, {
         method: 'POST',
@@ -54,25 +42,38 @@ exports.handler = async function(event, context) {
     });
 
     const responseBody = await response.text();
-    
-    // --- DEBUG LOGGING START ---
     console.log(`[INFO] Received raw response from Gemini (Status: ${response.status}):`, responseBody);
-    // --- DEBUG LOGGING END ---
 
     if (!response.ok) {
       throw new Error(`Gemini API responded with status ${response.status}. See function logs for details.`);
     }
 
     const result = JSON.parse(responseBody);
-    const detailsText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    let detailsText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!detailsText) {
       console.error("[ERROR] Invalid response format from Gemini: No text part found in candidates.");
       throw new Error("Invalid response format from Gemini API.");
     }
     
-    if (detailsText.trim() === '{}') {
-        console.warn("[WARN] Gemini returned an empty JSON object, indicating no data was found.");
+    // 增强的容错处理：尝试从返回的文本中提取出JSON
+    try {
+        const jsonMatch = detailsText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            detailsText = jsonMatch[0];
+            // 验证一下是否是有效的JSON
+            JSON.parse(detailsText); 
+        } else {
+            throw new Error("No JSON object found in the response text.");
+        }
+    } catch (e) {
+        console.error("[ERROR] Failed to parse JSON from Gemini's response text.", e);
+        // 如果解析失败，返回一个包含所有请求项的失败对象
+        const failureResult = {};
+        nutrientsToFetch.forEach(name => {
+            failureResult[name] = "查询失败";
+        });
+        detailsText = JSON.stringify(failureResult);
     }
     
     return {
