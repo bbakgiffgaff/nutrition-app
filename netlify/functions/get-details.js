@@ -19,7 +19,7 @@ exports.handler = async function(event, context) {
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
     const prompt = `For the food "${foodName}", find the following values: ${nutrientsToFetch.join(', ')}. Respond with a JSON object. The keys must be exactly: ${nutrientsToFetch.map(n => `"${n}"`).join(', ')}. If a value is not found, use the string "网络查询中暂无".`;
-
+            
     const schemaProperties = {};
     nutrientsToFetch.forEach(name => {
         schemaProperties[name] = { "type": "STRING" };
@@ -56,7 +56,7 @@ exports.handler = async function(event, context) {
     if (!detailsText) {
       throw new Error("Invalid details response format from Gemini API.");
     }
-
+    
     return {
       statusCode: 200,
       body: detailsText, // Directly forward the JSON string
@@ -64,9 +64,11 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error('Error in get-details function:', error);
+    // ** BUG FIX: Changed 'message' to 'error.message' **
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: message }),
+      body: JSON.stringify({ error: error.message }),
     };
   }
 };
+
