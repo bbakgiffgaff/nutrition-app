@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>营养计算器 & 食物查询</title>
+    <style>
+        /* CSS reset and basic styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to the top */
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Header styling */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: #444;
+        }
+
+        /* General Section Styling */
+        .section {
+            background-color: #fafafa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 15px;
+            border-left: 4px solid #b0c4de;
+            padding-left: 10px;
+        }
+        
+        /* Form Group Styling */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px 15px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #b0c4de;
+            box-shadow: 0 0 0 3px rgba(176, 196, 222, 0.4);
+        }
+
+        /* Button Styling */
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            background-color: #8b0000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            outline: none;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #6a0000;
+            transform: translateY(-2px);
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .button-group button {
+            margin-top: 0;
+        }
+        
+        .secondary-button {
+             background-color: #778899;
+        }
+        .secondary-button:hover {
+            background-color: #708090;
+        }
+
+
+        /* Search Container */
+        .search-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .search-container input[type="text"] {
+            flex-grow: 1;
+            padding: 12px 18px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .search-container button {
+            width: auto; /* Override full width */
+            margin-top: 0;
+        }
+
+        /* Results section styling */
+        .results-container {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            padding-top: 20px;
+        }
+        
+        .results-container h2 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #555;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .section li {
+            padding: 6px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .section li:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 400;
+            color: #777;
+        }
+
+        .value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .message-box {
+            text-align: left;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .message-box.loading {
+            color: #31708f;
+            background-color: #d9edf7;
+            text-align: center;
+        }
+
+        .message-box.error {
+            color: #a94442;
+            background-color: #f2dede;
+            text-align: center;
+        }
+        
+        .message-box.success {
+            color: #3c763d;
+            background-color: #dff0d8;
+            text-align: center;
+        }
+
+        .search-results-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .search-results-list li {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px 20px;
+            align-items: center;
+        }
+        
+        .search-results-list li:hover {
+            background-color: #f0f0f0;
+        }
+
+        .result-description {
+            grid-column: 1 / 2;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .result-nutrients {
+            grid-column: 1 / 2;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .result-actions {
+            grid-column: 2 / 3;
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-self: center;
+        }
+
+        .result-button {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: auto;
+            margin: 0;
+        }
+        
+        .add-button { background-color: #4CAF50; }
+        .add-button:hover { background-color: #45a049; }
+        .details-button { background-color: #2196F3; }
+        .details-button:hover { background-color: #1e88e5; }
+        .favorite-button { background-color: #ff9800; }
+        .favorite-button:hover { background-color: #f57c00; }
+
+        #foodList li, #favoriteFoodList li {
+            background-color: #e8f4f8;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .food-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .food-name {
+            font-weight: 500;
+        }
+
+        .food-macros {
+            font-size: 0.8rem;
+            color: #555;
+        }
+        
+        .list-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            width: 70px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        #favoriteFoodList .add-fav-button {
+            background-color: #4CAF50;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.5);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 700px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #modalNutrientContent h4 {
+             font-size: 1.1rem;
+            font-weight: 600;
+            color: #444;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-left: 4px solid #8b0000;
+            padding-left: 8px;
+        }
+        #modalNutrientContent ul {
+            list-style: none;
+            padding: 0;
+            column-count: 2;
+            column-gap: 25px;
+        }
+        #modalNutrientContent li {
+            border-bottom: 1px dashed #eee;
+            padding: 5px 0;
+        }
+        
+        .network-source {
+            color: #f44336;
+            vertical-align: super;
+            font-size: 1em;
+            text-decoration: none;
+        }
+        .modal-footnote {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        /* Adjustment Section Styles */
+        #adjustmentFoodList li {
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            gap: 15px;
+            align-items: center;
+        }
+        #adjustmentFoodList input {
+            width: 100%;
+            padding: 8px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: right;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>全方位营养与健康管理</h1>
+    </div>
+
+    <!-- BMR Calculator Section -->
+    <div class="section" id="bmrCalculator">
+        <h3>1. 计算您的每日需求</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="gender">性别:</label>
+                <select id="gender">
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="age">年龄:</label>
+                <input type="number" id="age" placeholder="岁">
+            </div>
+            <div class="form-group">
+                <label for="height">身高 (cm):</label>
+                <input type="number" id="height" placeholder="厘米">
+            </div>
+            <div class="form-group">
+                <label for="weight">体重 (kg):</label>
+                <input type="number" id="weight" placeholder="公斤">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+            <label for="activityLevel">活动水平:</label>
+            <select id="activityLevel">
+                <option value="1.2">久坐（很少或不运动）</option>
+                <option value="1.375">轻度活跃（每周运动1-3天）</option>
+                <option value="1.55">中度活跃（每周运动3-5天）</option>
+                <option value="1.725">非常活跃（每周运动6-7天）</option>
+                <option value="1.9">极度活跃（体力工作或高强度训练）</option>
+            </select>
+        </div>
+        <button id="calculateBmrButton">计算每日需求</button>
+        <button id="loadProfileButton" class="secondary-button">使用已保存参数</button>
+    </div>
+
+    <!-- Personal Goals and Results Section -->
+    <div id="personalGoalsSection" style="display:none;">
+        <div class="section">
+            <h3>2. 您的每日营养目标</h3>
+            <div class="form-group">
+                <label for="dietGoal">选择您的主要目标:</label>
+                <select id="dietGoal">
+                    <option value="lose">温和减重 (-15% 热量)</option>
+                    <option value="maintain" selected>维持体重</option>
+                    <option value="gain">温和增肌 (+15% 热量)</option>
+                </select>
+            </div>
+            <div class="form-grid" style="margin-top: 15px;">
+                <div class="form-group">
+                    <label for="proteinRatio">蛋白质摄入 (g/kg):</label>
+                    <select id="proteinRatio">
+                        <option value="0.4">0.4</option>
+                        <option value="0.5">0.5</option>
+                        <option value="0.6">0.6</option>
+                        <option value="0.7">0.7</option>
+                        <option value="0.8" selected>0.8 (标准)</option>
+                        <option value="0.9">0.9</option>
+                        <option value="1.0">1.0</option>
+                        <option value="1.1">1.1</option>
+                        <option value="1.2">1.2 (增肌推荐)</option>
+                        <option value="1.3">1.3</option>
+                        <option value="1.4">1.4</option>
+                        <option value="1.5">1.5</option>
+                        <option value="1.6">1.6</option>
+                        <option value="1.7">1.7</option>
+                        <option value="1.8">1.8</option>
+                        <option value="1.9">1.9</option>
+                        <option value="2.0">2.0 (高强度训练)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fatPercentage">脂肪供能占比 (%):</label>
+                    <select id="fatPercentage">
+                        <option value="20">20%</option>
+                        <option value="22">22%</option>
+                        <option value="25" selected>25% (均衡)</option>
+                        <option value="28">28%</option>
+                        <option value="30">30%</option>
+                    </select>
+                </div>
+            </div>
+            <ul id="macroResultList" style="margin-top: 15px;"></ul>
+            <div class="button-group">
+                <button id="saveProfileButton" class="secondary-button">保存当前参数</button>
+                <button id="updateProfileButton" class="secondary-button">更新已存参数</button>
+            </div>
+        </div>
+        <div class="section">
+            <h3>每日维生素与矿物质建议摄入量 (参考)</h3>
+            <ul id="microResultList"></ul>
+        </div>
+    </div>
+    
+    <!-- Food Intake Calculator Section -->
+    <div class="section" id="foodIntakeSection" style="display:none;">
+        <h3>3. 饮食摄入量计算</h3>
+        <p>在下方搜索并添加您计划摄入的食物。添加完成后，点击“计算”按钮以获取每种食物的建议摄入量。</p>
+        <div class="search-container">
+            <input type="text" id="foodInput" placeholder="输入常见食物中文名 (如: 苹果) 或英文名">
+            <button id="searchButton">查询</button>
+        </div>
+        <div id="foodSearchResults">
+            <!-- Search results will appear here -->
+        </div>
+        <div id="favoriteFoodsSection" style="margin-top: 20px;">
+            <h4>我的自选</h4>
+            <ul id="favoriteFoodList"></ul>
+        </div>
+        <div id="selectedFoods" style="margin-top: 20px;">
+            <h4>待计算食物列表</h4>
+            <ul id="foodList"></ul>
+        </div>
+        <button id="calculateIntakeButton" disabled>计算建议摄入量</button>
+    </div>
+
+    <!-- Manual Adjustment Section -->
+    <div class="section" id="manualAdjustmentSection" style="display:none;">
+        <h3>4. 手动微调配餐</h3>
+        <h4>建议摄入量 (克)</h4>
+        <ul id="adjustmentFoodList">
+            <!-- Editable food list will be populated here -->
+        </ul>
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ccc;">
+        <h4>预计营养总览</h4>
+        <ul id="adjustmentNutritionOverview">
+            <!-- Real-time nutrition overview will be populated here -->
+        </ul>
+        <p style="font-size:0.8rem; color:#777; margin-top:10px;">您可以直接修改上方食物的克重，营养总览将实时更新。</p>
+    </div>
+
+
+    <!-- Message box for loading, errors, or not found -->
+    <div id="messageBox" class="message-box"></div>
+
+    <div id="resultsContainer" class="results-container">
+        <!-- The results will be dynamically inserted here -->
+    </div>
+</div>
+
+<!-- The Modal -->
+<div id="detailsModal" class="modal">
+  <div class="modal-content">
+    <span class="close-button">&times;</span>
+    <h3 id="modalFoodName"></h3>
+    <p>(每100克)</p>
+    <div id="modalNutrientContent">
+      <!-- Nutrient details will be populated here -->
+    </div>
+    <p id="modalFootnote" class="modal-footnote" style="display: none;">*数据来源于网络</p>
+  </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // USDA FoodData Central API Key
+        const API_KEY = 'wXEs4V9de0vHUDbbWrsd18bCIhKICKQZScpsWInA'; // A public demo key
+        const USDA_API_URL = 'https://api.nal.usda.gov/fdc/v1';
+
+        // Global state variables
+        let userData = {};
+        let nutritionGoals = {};
+        let selectedFoodItems = [];
+
+        // DOM Elements
+        const calculateBmrButton = document.getElementById('calculateBmrButton');
+        const dietGoalSelect = document.getElementById('dietGoal');
+        const proteinRatioSelect = document.getElementById('proteinRatio');
+        const fatPercentageSelect = document.getElementById('fatPercentage');
+        const calculateIntakeButton = document.getElementById('calculateIntakeButton');
+        const foodInput = document.getElementById('foodInput');
+        const searchButton = document.getElementById('searchButton');
+        const foodListUl = document.getElementById('foodList');
+        const modal = document.getElementById('detailsModal');
+        const closeModalButton = document.querySelector('.close-button');
+        const saveProfileButton = document.getElementById('saveProfileButton');
+        const updateProfileButton = document.getElementById('updateProfileButton');
+        const loadProfileButton = document.getElementById('loadProfileButton');
+        
+        const nutrientIds = {
+            carbs: 1005, protein: 1003, fat: 1004, saturatedFat: 1258,
+            monounsaturatedFat: 1292, polyunsaturatedFat: 1293, fiber: 1079,
+            vitaminA: 1106, vitaminC: 1162, vitaminD: 1110, vitaminE: 1109,
+            vitaminK: 1185, vitaminB1: 1165, vitaminB2: 1166, vitaminB6: 1175,
+            vitaminB12: 1178, niacin: 1167, sodium: 1093, potassium: 1092,
+            phosphorus: 1091, calcium: 1087, magnesium: 1090, iron: 1089,
+            zinc: 1095, copper: 1098, manganese: 1101, chromium: 1113,
+            iodine: 1094, selenium: 1103, fluoride: 1088, chloride: 1017,
+            mercury: 1096,
+        };
+        
+        const microNutrientRDIs = {
+            male: {
+                '18-49': { vitaminA: '900 mcg', vitaminC: '100 mg', vitaminD: '15 mcg', vitaminE: '14 mg', vitaminK: '120 mcg', vitaminB1: '1.4 mg', vitaminB2: '1.4 mg', vitaminB6: '1.4 mg', vitaminB12: '2.4 mcg', niacin: '14 mg', sodium: '1500 mg', potassium: '3400 mg', phosphorus: '720 mg', calcium: '1000 mg', magnesium: '350 mg', iron: '15 mg', zinc: '12.5 mg', copper: '0.9 mg', manganese: '4.5 mg', chromium: '35 mcg', iodine: '120 mcg', selenium: '60 mcg', fluoride: '4 mg', chloride: '2300 mg' },
+                '50+': { vitaminA: '900 mcg', vitaminC: '100 mg', vitaminD: '20 mcg', vitaminE: '14 mg', vitaminK: '120 mcg', vitaminB1: '1.2 mg', vitaminB2: '1.2 mg', vitaminB6: '1.7 mg', vitaminB12: '2.4 mcg', niacin: '12 mg', sodium: '1500 mg', potassium: '3400 mg', phosphorus: '720 mg', calcium: '1200 mg', magnesium: '350 mg', iron: '15 mg', zinc: '12.5 mg', copper: '0.9 mg', manganese: '4.5 mg', chromium: '30 mcg', iodine: '120 mcg', selenium: '60 mcg', fluoride: '4 mg', chloride: '2300 mg' }
+            },
+            female: {
+                '18-49': { vitaminA: '800 mcg', vitaminC: '100 mg', vitaminD: '15 mcg', vitaminE: '14 mg', vitaminK: '90 mcg', vitaminB1: '1.2 mg', vitaminB2: '1.2 mg', vitaminB6: '1.2 mg', vitaminB12: '2.4 mcg', niacin: '14 mg', sodium: '1500 mg', potassium: '2600 mg', phosphorus: '720 mg', calcium: '1000 mg', magnesium: '300 mg', iron: '20 mg', zinc: '9.5 mg', copper: '0.9 mg', manganese: '3.5 mg', chromium: '25 mcg', iodine: '120 mcg', selenium: '60 mcg', fluoride: '3 mg', chloride: '2300 mg' },
+                '50+': { vitaminA: '800 mcg', vitaminC: '100 mg', vitaminD: '20 mcg', vitaminE: '14 mg', vitaminK: '90 mcg', vitaminB1: '1.1 mg', vitaminB2: '1.1 mg', vitaminB6: '1.5 mg', vitaminB12: '2.4 mcg', niacin: '11 mg', sodium: '1500 mg', potassium: '2600 mg', phosphorus: '720 mg', calcium: '1200 mg', magnesium: '300 mg', iron: '15 mg', zinc: '9.5 mg', copper: '0.9 mg', manganese: '3.5 mg', chromium: '20 mcg', iodine: '120 mcg', selenium: '60 mcg', fluoride: '3 mg', chloride: '2300 mg' }
+            }
+        };
+
+        // --- Feature 1 & 2: BMR and Nutrition Goal Calculation ---
+        
+        function performCalculations() {
+            const gender = document.getElementById('gender').value;
+            const age = parseInt(document.getElementById('age').value);
+            const height = parseInt(document.getElementById('height').value);
+            const weight = parseInt(document.getElementById('weight').value);
+            const activityLevel = parseFloat(document.getElementById('activityLevel').value);
+
+            if (!age || !height || !weight) {
+                showMessage('error', '请输入完整的年龄、身高和体重信息。');
+                return false;
+            }
+
+            userData = { gender, age, height, weight, activityLevel };
+
+            let bmr;
+            if (gender === 'male') {
+                bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+            } else {
+                bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+            }
+
+            const tdee = bmr * activityLevel;
+            userData.bmr = bmr.toFixed(0);
+            userData.tdee = tdee.toFixed(0);
+
+            document.getElementById('personalGoalsSection').style.display = 'block';
+            document.getElementById('foodIntakeSection').style.display = 'block';
+            
+            updateNutritionGoals();
+            updateMicroNutrientGoals();
+            return true;
+        }
+        
+        calculateBmrButton.addEventListener('click', performCalculations);
+
+        dietGoalSelect.addEventListener('change', updateNutritionGoals);
+        proteinRatioSelect.addEventListener('change', updateNutritionGoals);
+        fatPercentageSelect.addEventListener('change', updateNutritionGoals);
+
+        function updateNutritionGoals() {
+            if (!userData.tdee) return;
+            
+            const goal = dietGoalSelect.value;
+            let targetCalories = parseFloat(userData.tdee);
+
+            if (goal === 'lose') {
+                targetCalories *= 0.85;
+            } else if (goal === 'gain') {
+                targetCalories *= 1.15;
+            }
+
+            const proteinRatio = parseFloat(proteinRatioSelect.value);
+            const fatPercentage = parseInt(fatPercentageSelect.value);
+
+            const proteinGrams = (proteinRatio * userData.weight).toFixed(0);
+            const proteinCalories = proteinGrams * 4;
+
+            const fatCalories = targetCalories * (fatPercentage / 100);
+            const fatGrams = (fatCalories / 9).toFixed(0);
+            
+            const carbsCalories = targetCalories - proteinCalories - fatCalories;
+            const carbsGrams = (carbsCalories / 4).toFixed(0);
+
+            nutritionGoals = {
+                calories: targetCalories.toFixed(0),
+                carbs: carbsGrams,
+                protein: proteinGrams,
+                fat: fatGrams
+            };
+
+            const macroList = document.getElementById('macroResultList');
+            macroList.innerHTML = `
+                <li><span class="label">每日目标热量:</span> <span class="value">${nutritionGoals.calories} kcal</span></li>
+                <li><span class="label">碳水化合物:</span> <span class="value">${nutritionGoals.carbs} g</span></li>
+                <li><span class="label">蛋白质:</span> <span class="value">${nutritionGoals.protein} g</span></li>
+                <li><span class="label">脂肪:</span> <span class="value">${nutritionGoals.fat} g</span></li>
+            `;
+        }
+
+        // --- Feature 3: Micronutrient Recommendations ---
+        function updateMicroNutrientGoals() {
+            if (!userData.age) return;
+            
+            const ageRange = userData.age >= 50 ? '50+' : '18-49';
+            const rdiData = microNutrientRDIs[userData.gender][ageRange];
+            const microList = document.getElementById('microResultList');
+            microList.innerHTML = ''; 
+
+            const nutrientNameMap = {
+                vitaminA: '维生素A', vitaminC: '维生素C', vitaminD: '维生素D', vitaminE: '维生素E', vitaminK: '维生素K',
+                vitaminB1: '维生素B1', vitaminB2: '维生素B2', vitaminB6: '维生素B6', vitaminB12: '维生素B12',
+                niacin: '烟酸', sodium: '钠', potassium: '钾', phosphorus: '磷', calcium: '钙',
+                magnesium: '镁', iron: '铁', zinc: '锌', copper: '铜', manganese: '锰',
+                chromium: '铬', iodine: '碘', selenium: '硒', fluoride: '氟', chloride: '氯'
+            };
+
+            for (const key in rdiData) {
+                if (nutrientNameMap[key]) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="label">${nutrientNameMap[key]}:</span> <span class="value">${rdiData[key]}</span>`;
+                    microList.appendChild(li);
+                }
+            }
+        }
+        
+        // --- Feature 4: Food Intake Calculation ---
+        searchButton.addEventListener('click', handleSearch);
+        foodInput.addEventListener('keydown', (e) => e.key === 'Enter' && handleSearch());
+        
+        async function handleSearch() {
+            const foodName = foodInput.value.trim();
+            if (!foodName) return;
+            
+            showMessage('loading', '正在翻译并查询食物...');
+            try {
+                // MODIFICATION: Calls our new backend function instead of Gemini directly
+                const englishFoodName = await translateFoodName(foodName);
+
+                const searchUrl = `${USDA_API_URL}/foods/search?api_key=${API_KEY}&query=${encodeURIComponent(englishFoodName)}`;
+                const searchResponse = await fetch(searchUrl);
+                const searchData = await searchResponse.json();
+
+                if (!searchData || !searchData.foods || searchData.foods.length === 0) {
+                    throw new Error('抱歉，未找到相关食物。');
+                }
+                
+                const topFoods = searchData.foods.slice(0, 5);
+                const fdcIds = topFoods.map(food => food.fdcId);
+                const details = await fetchMultipleFoodDetails(fdcIds);
+
+                renderSearchResults(details, foodName);
+                hideMessage();
+
+            } catch (error) {
+                showMessage('error', error.message);
+            }
+        }
+
+        async function fetchMultipleFoodDetails(fdcIds) {
+            if (fdcIds.length === 0) return [];
+            const detailsUrl = `${USDA_API_URL}/foods?api_key=${API_KEY}`;
+            const response = await fetch(detailsUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fdcIds: fdcIds })
+            });
+            if (!response.ok) {
+                throw new Error('获取食物详细数据失败。');
+            }
+            return await response.json();
+        }
+        
+        function renderSearchResults(foods, chineseName) {
+            const resultsDiv = document.getElementById('foodSearchResults');
+            resultsDiv.innerHTML = '<h4>请选择最相关的食物 (每100g):</h4>';
+            const ul = document.createElement('ul');
+            ul.className = 'search-results-list';
+
+            foods.forEach(food => {
+                const findNutrient = (id) => {
+                    const nutrient = food.foodNutrients.find(n => n.nutrient.id === id);
+                    return nutrient ? parseFloat(nutrient.amount) : 0;
+                };
+
+                const foodItem = {
+                    fdcId: food.fdcId,
+                    name: food.description,
+                    originalChineseName: chineseName,
+                    carbs: findNutrient(nutrientIds.carbs),
+                    protein: findNutrient(nutrientIds.protein),
+                    fat: findNutrient(nutrientIds.fat),
+                    calories: (findNutrient(nutrientIds.carbs) * 4 + findNutrient(nutrientIds.protein) * 4 + findNutrient(nutrientIds.fat) * 9),
+                    fullNutrients: food.foodNutrients
+                };
+
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="result-description">${foodItem.name}</span>
+                    <div class="result-nutrients">
+                        <span>热量: ${foodItem.calories.toFixed(0)}kcal</span>
+                        <span>碳水: ${foodItem.carbs.toFixed(1)}g</span>
+                        <span>蛋白: ${foodItem.protein.toFixed(1)}g</span>
+                        <span>脂肪: ${foodItem.fat.toFixed(1)}g</span>
+                    </div>
+                    <div class="result-actions">
+                        <button class="result-button details-button">查看详情</button>
+                        <button class="result-button add-button">添加至列表</button>
+                        <button class="result-button favorite-button">收藏</button>
+                    </div>
+                `;
+                
+                li.querySelector('.add-button').addEventListener('click', () => addFoodToList(foodItem));
+                li.querySelector('.details-button').addEventListener('click', () => showDetailsModal(foodItem));
+                li.querySelector('.favorite-button').addEventListener('click', () => addFoodToFavorites(foodItem));
+
+                ul.appendChild(li);
+            });
+            resultsDiv.appendChild(ul);
+        }
+        
+        function addFoodToList(foodItem) {
+            if (selectedFoodItems.some(item => item.fdcId === foodItem.fdcId)) {
+                showMessage('error', `"${foodItem.originalChineseName || foodItem.name}" 已在列表中。`);
+                return;
+            }
+            selectedFoodItems.push(foodItem);
+            updateFoodListUI();
+            document.getElementById('foodSearchResults').innerHTML = '';
+            foodInput.value = '';
+        }
+
+        function updateFoodListUI() {
+            foodListUl.innerHTML = '';
+            selectedFoodItems.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="food-info">
+                        <span class="food-name">${item.originalChineseName || item.name}</span>
+                        <span class="food-macros">(每100g - 碳: ${item.carbs.toFixed(1)}g, 脂: ${item.fat.toFixed(1)}g, 蛋: ${item.protein.toFixed(1)}g)</span>
+                    </div>
+                    <button class="list-button remove-food-btn" data-index="${index}">移除</button>
+                `;
+                foodListUl.appendChild(li);
+            });
+            
+            foodListUl.querySelectorAll('.remove-food-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const indexToRemove = parseInt(e.target.dataset.index);
+                    selectedFoodItems.splice(indexToRemove, 1);
+                    updateFoodListUI();
+                });
+            });
+            
+            calculateIntakeButton.disabled = selectedFoodItems.length === 0;
+        }
+
+        // --- Modal Logic ---
+        async function showDetailsModal(foodItem) {
+            document.getElementById('modalFoodName').textContent = foodItem.name;
+            const contentDiv = document.getElementById('modalNutrientContent');
+            const footnote = document.getElementById('modalFootnote');
+            footnote.style.display = 'none'; // Hide footnote initially
+            let networkDataUsed = false;
+            let nutrientsToFetch = [];
+
+            const findNutrientValue = (id, name) => {
+                const nutrient = foodItem.fullNutrients.find(n => n.nutrient.id === id);
+                if (nutrient && typeof nutrient.amount !== 'undefined') {
+                    return `${nutrient.amount.toFixed(2)} ${nutrient.nutrient.unitName.toLowerCase()}`;
+                } else {
+                    nutrientsToFetch.push(name);
+                    return `<span data-nutrient-name="${name}">正在查询...</span>`;
+                }
+            };
+            
+            const allNutrients = [
+                { name: '维生素A', id: nutrientIds.vitaminA }, { name: '维生素C', id: nutrientIds.vitaminC },
+                { name: '维生素D', id: nutrientIds.vitaminD }, { name: '维生素E', id: nutrientIds.vitaminE },
+                { name: '维生素K', id: nutrientIds.vitaminK }, { name: '维生素B1', id: nutrientIds.vitaminB1 },
+                { name: '维生素B2', id: nutrientIds.vitaminB2 }, { name: '维生素B6', id: nutrientIds.vitaminB6 },
+                { name: '维生素B12', id: nutrientIds.vitaminB12 }, { name: '烟酸', id: nutrientIds.niacin },
+                { name: '钠', id: nutrientIds.sodium }, { name: '钾', id: nutrientIds.potassium },
+                { name: '磷', id: nutrientIds.phosphorus }, { name: '钙', id: nutrientIds.calcium },
+                { name: '镁', id: nutrientIds.magnesium }, { name: '铁', id: nutrientIds.iron },
+                { name: '锌', id: nutrientIds.zinc }, { name: '铜', id: nutrientIds.copper },
+                { name: '锰', id: nutrientIds.manganese }, { name: '铬', id: nutrientIds.chromium },
+                { name: '碘', id: nutrientIds.iodine }, { name: '硒', id: nutrientIds.selenium },
+                { name: '氟', id: nutrientIds.fluoride }, { name: '氯', id: nutrientIds.chloride },
+                { name: '汞', id: nutrientIds.mercury }, { name: '总膳食纤维', id: nutrientIds.fiber }
+            ];
+
+            contentDiv.innerHTML = `
+                <h4>营养成分</h4>
+                <ul>
+                    <li><span class="label">碳水化合物:</span> <span class="value">${findNutrientValue(nutrientIds.carbs, '碳水化合物')}</span></li>
+                    <li><span class="label">蛋白质:</span> <span class="value">${findNutrientValue(nutrientIds.protein, '蛋白质')}</span></li>
+                    <li><span class="label">脂肪:</span> <span class="value">${findNutrientValue(nutrientIds.fat, '脂肪')}</span></li>
+                </ul>
+                <h4>脂肪酸</h4>
+                <ul>
+                    <li><span class="label">饱和脂肪酸:</span> <span class="value">${findNutrientValue(nutrientIds.saturatedFat, '饱和脂肪酸')}</span></li>
+                    <li><span class="label">单不饱和脂肪酸:</span> <span class="value">${findNutrientValue(nutrientIds.monounsaturatedFat, '单不饱和脂肪酸')}</span></li>
+                    <li><span class="label">多不饱和脂肪酸:</span> <span class="value">${findNutrientValue(nutrientIds.polyunsaturatedFat, '多不饱和脂肪酸')}</span></li>
+                </ul>
+                <h4>维生素、矿物质 & 膳食纤维</h4>
+                <ul>
+                    ${allNutrients.map(item => `<li><span class="label">${item.name}:</span> <span class="value">${findNutrientValue(item.id, item.name)}</span></li>`).join('')}
+                </ul>
+                <h4>其他信息</h4>
+                <ul>
+                    <li><span class="label">嘌呤含量:</span> <span class="value" data-nutrient-name="嘌呤含量">正在查询...</span></li>
+                    <li><span class="label">GI (血糖生成指数):</span> <span class="value" data-nutrient-name="GI (血糖生成指数)">正在查询...</span></li>
+                    <li><span class="label">GL (血糖负荷):</span> <span class="value" data-nutrient-name="GL (血糖负荷)">正在查询...</span></li>
+                </ul>
+            `;
+            
+            modal.style.display = 'block';
+
+            nutrientsToFetch.push('嘌呤含量', 'GI (血糖生成指数)', 'GL (血糖负荷)');
+            
+            // MODIFICATION: Call our new backend function instead of Gemini directly
+            const supplementaryData = await fetchSupplementaryData(foodItem.name, nutrientsToFetch);
+
+            for (const key in supplementaryData) {
+                const valueSpan = contentDiv.querySelector(`[data-nutrient-name="${key}"]`);
+                if (valueSpan) {
+                    const value = supplementaryData[key];
+                    if (value && value !== '网络查询中暂无' && value !== '查询失败') {
+                         valueSpan.innerHTML = `${value} <span class="network-source">*</span>`;
+                         networkDataUsed = true;
+                    } else {
+                        valueSpan.textContent = '网络查询中暂无';
+                    }
+                }
+            }
+            contentDiv.querySelectorAll('span[data-nutrient-name]').forEach(span => {
+                if(span.textContent === '正在查询...') {
+                    span.textContent = '网络查询中暂无';
+                }
+            });
+
+            if (networkDataUsed) {
+                footnote.style.display = 'block';
+            }
+        }
+        
+        async function fetchSupplementaryData(foodName, nutrientsToFetch) {
+            // MODIFICATION: This now calls our secure Netlify function
+            if (nutrientsToFetch.length === 0) return {};
+            try {
+                const response = await fetch('/.netlify/functions/get-details', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ foodName, nutrientsToFetch })
+                });
+                if (!response.ok) {
+                    throw new Error('网络查询服务暂时不可用。');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Failed to fetch supplementary data:", error);
+                const failureResult = {};
+                nutrientsToFetch.forEach(name => {
+                    failureResult[name] = '查询失败';
+                });
+                return failureResult;
+            }
+        }
+
+
+        closeModalButton.onclick = () => modal.style.display = "none";
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+        // ** FINAL, REVISED ALGORITHM **
+        calculateIntakeButton.addEventListener('click', () => {
+            if (selectedFoodItems.length === 0) return;
+            
+            document.getElementById('manualAdjustmentSection').style.display = 'none';
+            showMessage('loading', '正在为您智能计算配餐...');
+
+            setTimeout(() => {
+                const target = {
+                    calories: parseFloat(nutritionGoals.calories),
+                    carbs: parseFloat(nutritionGoals.carbs),
+                    protein: parseFloat(nutritionGoals.protein),
+                    fat: parseFloat(nutritionGoals.fat)
+                };
+                const tolerance = 0.05; // 5%
+
+                // Stage 1: Base Allocation
+                const baseAmount = 50; // Start with 50g of each food
+                let amounts = new Array(selectedFoodItems.length).fill(baseAmount);
+                let current = { calories: 0, carbs: 0, protein: 0, fat: 0 };
+                
+                selectedFoodItems.forEach((food) => {
+                    current.calories += food.calories * (baseAmount / 100);
+                    current.carbs += food.carbs * (baseAmount / 100);
+                    current.protein += food.protein * (baseAmount / 100);
+                    current.fat += food.fat * (baseAmount / 100);
+                });
+
+                const maxIterations = 5000;
+                let iteration = 0;
+
+                // Stage 2: Fill to meet targets
+                const fillNutrient = (nutrient, nutrientTarget) => {
+                    while (current[nutrient] < nutrientTarget && iteration < maxIterations) {
+                        iteration++;
+                        let bestFoodIndex = -1;
+                        let maxEfficiency = -1;
+
+                        selectedFoodItems.forEach((food, index) => {
+                           if (food.calories > 0) {
+                                // Efficiency is how much of the nutrient you get per calorie
+                                const efficiency = food[nutrient] / food.calories;
+                                if (efficiency > maxEfficiency) {
+                                    maxEfficiency = efficiency;
+                                    bestFoodIndex = index;
+                                }
+                            }
+                        });
+
+                        if (bestFoodIndex !== -1) {
+                            amounts[bestFoodIndex]++;
+                            const food = selectedFoodItems[bestFoodIndex];
+                            current.calories += food.calories / 100;
+                            current.carbs += food.carbs / 100;
+                            current.protein += food.protein / 100;
+                            current.fat += food.fat / 100;
+                        } else { break; }
+                    }
+                };
+                
+                // Priority: Protein -> Carbs
+                fillNutrient('protein', target.protein * (1 - tolerance));
+                fillNutrient('carbs', target.carbs * (1 - tolerance));
+                
+                // Stage 3: Adjustment Phase
+                const adjustNutrient = (nutrient, nutrientTarget) => {
+                    while (current[nutrient] > nutrientTarget * (1 + tolerance) && iteration < maxIterations) {
+                        iteration++;
+                        let foodToReduceIndex = -1;
+                        let maxContent = -1;
+
+                        // Find the food with the most of the nutrient to reduce
+                        amounts.forEach((amount, index) => {
+                            if (amount > baseAmount) { // Only reduce foods above the base amount
+                                const food = selectedFoodItems[index];
+                                if (food[nutrient] > maxContent) {
+                                    maxContent = food[nutrient];
+                                    foodToReduceIndex = index;
+                                }
+                            }
+                        });
+
+                        if (foodToReduceIndex !== -1) {
+                            amounts[foodToReduceIndex]--;
+                            const food = selectedFoodItems[foodToReduceIndex];
+                            current.calories -= food.calories / 100;
+                            current.carbs -= food.carbs / 100;
+                            current.protein -= food.protein / 100;
+                            current.fat -= food.fat / 100;
+                        } else {
+                            break; // Cannot reduce further
+                        }
+                    }
+                };
+
+                adjustNutrient('protein', target.protein);
+                adjustNutrient('carbs', target.carbs);
+
+                // Populate the adjustment section
+                hideMessage();
+                populateAdjustmentSection(amounts);
+            }, 50);
+        });
+
+        function populateAdjustmentSection(amounts) {
+            const adjustmentList = document.getElementById('adjustmentFoodList');
+            adjustmentList.innerHTML = '';
+
+            amounts.forEach((amount, index) => {
+                const food = selectedFoodItems[index];
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="label">${food.originalChineseName || food.name}</span>
+                    <input type="number" class="adjustment-input" value="${Math.round(amount)}" data-index="${index}">
+                `;
+                adjustmentList.appendChild(li);
+            });
+
+            // Add event listeners to new inputs
+            adjustmentList.querySelectorAll('.adjustment-input').forEach(input => {
+                input.addEventListener('input', updateProjectedNutrition);
+            });
+
+            // Initial calculation and display
+            updateProjectedNutrition();
+            document.getElementById('manualAdjustmentSection').style.display = 'block';
+        }
+
+        function updateProjectedNutrition() {
+            const overviewList = document.getElementById('adjustmentNutritionOverview');
+            const inputs = document.getElementById('adjustmentFoodList').querySelectorAll('.adjustment-input');
+            let current = { calories: 0, carbs: 0, protein: 0, fat: 0 };
+
+            inputs.forEach(input => {
+                const index = parseInt(input.dataset.index);
+                const amount = parseFloat(input.value) || 0;
+                const food = selectedFoodItems[index];
+
+                current.calories += food.calories * (amount / 100);
+                current.carbs += food.carbs * (amount / 100);
+                current.protein += food.protein * (amount / 100);
+                current.fat += food.fat * (amount / 100);
+            });
+
+            const target = {
+                calories: parseFloat(nutritionGoals.calories),
+                carbs: parseFloat(nutritionGoals.carbs),
+                protein: parseFloat(nutritionGoals.protein),
+                fat: parseFloat(nutritionGoals.fat)
+            };
+
+            overviewList.innerHTML = `
+                <li><span class="label">总热量:</span> <span class="value">${current.calories.toFixed(0)} / ${target.calories} kcal</span></li>
+                <li><span class="label">碳水:</span> <span class="value">${current.carbs.toFixed(0)} / ${target.carbs} g</span></li>
+                <li><span class="label">蛋白质:</span> <span class="value">${current.protein.toFixed(0)} / ${target.protein} g</span></li>
+                <li><span class="label">脂肪:</span> <span class="value">${current.fat.toFixed(0)} / ${target.fat} g</span></li>
+            `;
+        }
+        
+        // --- Save/Load Profile & Favorites ---
+        saveProfileButton.addEventListener('click', saveUserProfile);
+        updateProfileButton.addEventListener('click', saveUserProfile);
+        loadProfileButton.addEventListener('click', () => loadUserProfile(true));
+
+        function saveUserProfile() {
+            try {
+                const age = document.getElementById('age').value;
+                const height = document.getElementById('height').value;
+                const weight = document.getElementById('weight').value;
+                if (!age || !height || !weight) {
+                    showMessage('error', '请先输入并计算您的每日需求后，再保存参数。');
+                    return;
+                }
+
+                const profileData = {
+                    gender: document.getElementById('gender').value,
+                    age: age,
+                    height: height,
+                    weight: weight,
+                    activityLevel: document.getElementById('activityLevel').value,
+                    dietGoal: document.getElementById('dietGoal').value,
+                    proteinRatio: document.getElementById('proteinRatio').value,
+                    fatPercentage: document.getElementById('fatPercentage').value
+                };
+                localStorage.setItem('userProfileData', JSON.stringify(profileData));
+                showMessage('success', '参数已成功保存至您的浏览器！');
+            } catch (e) {
+                console.error("Save/Update failed:", e);
+                showMessage('error', '参数保存失败。您的浏览器可能不支持此功能或开启了隐私模式。');
+            }
+        }
+
+        function loadUserProfile(isManual) {
+            try {
+                const savedData = localStorage.getItem('userProfileData');
+                if (savedData) {
+                    const profileData = JSON.parse(savedData);
+                    document.getElementById('gender').value = profileData.gender;
+                    document.getElementById('age').value = profileData.age;
+                    document.getElementById('height').value = profileData.height;
+                    document.getElementById('weight').value = profileData.weight;
+                    document.getElementById('activityLevel').value = profileData.activityLevel;
+                    document.getElementById('dietGoal').value = profileData.dietGoal;
+                    document.getElementById('proteinRatio').value = profileData.proteinRatio;
+                    document.getElementById('fatPercentage').value = profileData.fatPercentage;
+                    
+                    if (performCalculations()) {
+                        if (isManual) {
+                           showMessage('success', '已成功加载保存的参数！');
+                        }
+                    }
+                } else {
+                    if (isManual) {
+                        showMessage('error', '没有找到已保存的参数。');
+                    }
+                }
+            } catch (e) {
+                console.error("Load failed:", e);
+                if (isManual) {
+                    showMessage('error', '参数加载失败。您的浏览器可能不支持此功能。');
+                }
+            }
+        }
+        
+        function addFoodToFavorites(foodItem) {
+            let favorites = JSON.parse(localStorage.getItem('userFavoriteFoods')) || [];
+            if (favorites.some(fav => fav.fdcId === foodItem.fdcId)) {
+                showMessage('error', `"${foodItem.originalChineseName || foodItem.name}" 已在自选列表中。`);
+                return;
+            }
+            favorites.push(foodItem);
+            localStorage.setItem('userFavoriteFoods', JSON.stringify(favorites));
+            showMessage('success', `"${foodItem.originalChineseName || foodItem.name}" 已添加到自选！`);
+            renderFavoriteFoods();
+        }
+
+        function renderFavoriteFoods() {
+            const favoriteList = document.getElementById('favoriteFoodList');
+            favoriteList.innerHTML = '';
+            let favorites = JSON.parse(localStorage.getItem('userFavoriteFoods')) || [];
+
+            if (favorites.length === 0) {
+                favoriteList.innerHTML = '<p style="text-align:center; color:#999; font-size:0.9rem;">您的自选列表是空的。</p>';
+                return;
+            }
+
+            favorites.forEach((food, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="food-info">
+                        <span class="food-name">${food.originalChineseName || food.name}</span>
+                        <span class="food-macros">(每100g - 碳: ${food.carbs.toFixed(1)}g, 脂: ${food.fat.toFixed(1)}g, 蛋: ${food.protein.toFixed(1)}g)</span>
+                    </div>
+                    <div>
+                        <button class="list-button add-fav-button" data-index="${index}">添加</button>
+                        <button class="list-button remove-food-btn" data-fav-index="${index}">移除</button>
+                    </div>
+                `;
+                favoriteList.appendChild(li);
+            });
+
+            favoriteList.querySelectorAll('.add-fav-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    addFoodToList(favorites[index]);
+                });
+            });
+            
+            favoriteList.querySelectorAll('.remove-food-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const indexToRemove = parseInt(e.target.dataset.favIndex);
+                    favorites.splice(indexToRemove, 1);
+                    localStorage.setItem('userFavoriteFoods', JSON.stringify(favorites));
+                    renderFavoriteFoods();
+                });
+            });
+        }
+
+
+        // --- Helper Functions ---
+        const messageBox = document.getElementById('messageBox');
+        function showMessage(type, text) {
+            messageBox.className = `message-box ${type}`;
+            messageBox.textContent = text;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                if(messageBox.textContent === text) {
+                    messageBox.style.display = 'none';
+                }
+            }, 3000);
+        }
+        function hideMessage() {
+            messageBox.style.display = 'none';
+        }
+
+        async function translateFoodName(chineseName) {
+            // MODIFICATION: This now calls our secure Netlify function
+            try {
+                const response = await fetch('/.netlify/functions/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chineseName })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "翻译服务暂时不可用。");
+                }
+                
+                const data = await response.json();
+                return data.englishName;
+
+            } catch (error) {
+                console.error("Translate error:", error);
+                throw error; // Re-throw the error to be caught by handleSearch
+            }
+        }
+        
+        // Initial Load
+        loadUserProfile(false);
+        renderFavoriteFoods();
+    });
+</script>
+
+</body>
+</html>
+
