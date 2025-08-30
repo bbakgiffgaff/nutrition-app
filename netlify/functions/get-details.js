@@ -33,7 +33,7 @@ exports.handler = async function(event, context) {
             responseSchema: {
                 type: "OBJECT",
                 properties: schemaProperties,
-                required: nutrientsToFetch
+                // ** FIX: Removed the overly strict 'required' field **
             }
         }
     };
@@ -64,7 +64,6 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error('Error in get-details function:', error);
-    // ** BUG FIX: Changed 'message' to 'error.message' **
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
