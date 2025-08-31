@@ -416,20 +416,56 @@
         }
         
         /* Adjustment Section Styles */
-        #adjustmentFoodList li {
+        .adjustment-grid-header, .adjustment-grid-row {
             display: grid;
-            grid-template-columns: 1fr 100px;
-            gap: 15px;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
             align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
         }
+        .adjustment-grid-header {
+            font-weight: bold;
+            color: #555;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .adjustment-grid-header > div, .adjustment-grid-row > div {
+             text-align: right;
+        }
+        .adjustment-grid-header > div:first-child, .adjustment-grid-row > div:first-child {
+             text-align: left;
+        }
+        
         #adjustmentFoodList input {
             width: 100%;
-            padding: 8px;
-            font-size: 1rem;
+            padding: 6px;
+            font-size: 0.9rem;
             border: 1px solid #ccc;
             border-radius: 6px;
             text-align: right;
         }
+         #adjustmentFoodList input[readonly] {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        /* NEW: Collapsible Section Styles */
+        #microNutrientSection h3 {
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapsible-arrow {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        #microNutrientSection h3.collapsed-header .collapsible-arrow {
+            transform: rotate(-90deg);
+        }
+        #microResultListContainer.collapsed {
+            display: none;
+        }
+
 
     </style>
 </head>
@@ -440,7 +476,6 @@
         <h1>全方位营养与健康管理</h1>
     </div>
 
-    <!-- BMR Calculator Section -->
     <div class="section" id="bmrCalculator">
         <h3>1. 计算您的每日需求</h3>
         <div class="form-grid">
@@ -478,7 +513,6 @@
         <button id="loadProfileButton" class="secondary-button">使用已保存参数</button>
     </div>
 
-    <!-- Personal Goals and Results Section -->
     <div id="personalGoalsSection" style="display:none;">
         <div class="section">
             <h3>2. 您的每日营养目标</h3>
@@ -530,23 +564,56 @@
                 <button id="updateProfileButton" class="secondary-button">更新已存参数</button>
             </div>
         </div>
-        <div class="section">
-            <h3>每日维生素与矿物质建议摄入量 (参考)</h3>
-            <ul id="microResultList"></ul>
+        <div class="section" id="microNutrientSection">
+            <h3 id="microNutrientHeader">
+                <span class="collapsible-arrow">▼</span> 每日维生素与矿物质建议摄入量 (参考)
+            </h3>
+            <div id="microResultListContainer">
+                <ul id="microResultList"></ul>
+            </div>
         </div>
     </div>
     
-    <!-- Food Intake Calculator Section -->
-    <div class="section" id="foodIntakeSection" style="display:none;">
-        <h3>3. 饮食摄入量计算</h3>
-        <p>在下方搜索并添加您计划摄入的食物。添加完成后，点击“计算”按钮以获取每种食物的建议摄入量。</p>
-        <div class="search-container">
-            <input type="text" id="foodInput" placeholder="输入常见食物中文名 (如: 苹果) 或英文名">
-            <button id="searchButton">查询</button>
+    <div id="foodIntakeSection" style="display:none;">
+        <div class="section" id="customFoodSection">
+            <h3>3a. 添加自定义食物</h3>
+            <p>在这里输入您已知营养成分的食物，并将其保存到“我的自选”中以便后续使用。</p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="customFoodName">食物名称:</label>
+                    <input type="text" id="customFoodName" placeholder="例如: 自制鸡胸肉沙拉">
+                </div>
+                <div class="form-group">
+                    <label for="customCarbs">碳水 (g/100g):</label>
+                    <input type="number" id="customCarbs" placeholder="例如: 5">
+                </div>
+                <div class="form-group">
+                    <label for="customProtein">蛋白质 (g/100g):</label>
+                    <input type="number" id="customProtein" placeholder="例如: 25">
+                </div>
+                <div class="form-group">
+                    <label for="customFat">脂肪 (g/100g):</label>
+                    <input type="number" id="customFat" placeholder="例如: 3">
+                </div>
+                <div class="form-group">
+                    <label for="customCalories">热量 (kcal/100g):</label>
+                    <input type="number" id="customCalories" placeholder="自动计算" readonly style="background-color: #eee;">
+                </div>
+            </div>
+            <button id="addCustomFoodButton" style="margin-top: 15px;">添加至我的自选</button>
         </div>
-        <div id="foodSearchResults">
-            <!-- Search results will appear here -->
+        
+        <div class="section" id="foodSearchSection" style="margin-top: 20px;">
+            <h3>3b. 在线查询食物</h3>
+            <p>在下方搜索并添加您计划摄入的食物。添加完成后，点击“计算”按钮以获取每种食物的建议摄入量。</p>
+            <div class="search-container">
+                <input type="text" id="foodInput" placeholder="输入常见食物中文名 (如: 苹果) 或英文名">
+                <button id="searchButton">查询</button>
+            </div>
+            <div id="foodSearchResults">
+                </div>
         </div>
+
         <div id="favoriteFoodsSection" style="margin-top: 20px;">
             <h4>我的自选</h4>
             <ul id="favoriteFoodList"></ul>
@@ -558,39 +625,41 @@
         <button id="calculateIntakeButton" disabled>计算建议摄入量</button>
     </div>
 
-    <!-- Manual Adjustment Section -->
+
     <div class="section" id="manualAdjustmentSection" style="display:none;">
         <h3>4. 手动微调配餐</h3>
         <h4>建议摄入量 (克)</h4>
-        <ul id="adjustmentFoodList">
-            <!-- Editable food list will be populated here -->
-        </ul>
+        <div id="adjustmentFoodList">
+            <div class="adjustment-grid-header">
+                <div>食物名称</div>
+                <div>合计</div>
+                <div>早餐</div>
+                <div>午餐</div>
+                <div>晚餐</div>
+                <div>加餐</div>
+            </div>
+            </div>
         <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ccc;">
         <h4>预计营养总览</h4>
         <ul id="adjustmentNutritionOverview">
-            <!-- Real-time nutrition overview will be populated here -->
-        </ul>
-        <p style="font-size:0.8rem; color:#777; margin-top:10px;">您可以直接修改上方食物的克重，营养总览将实时更新。</p>
+            </ul>
+        <p style="font-size:0.8rem; color:#777; margin-top:10px;">您可以直接修改上方各餐的克重，合计及营养总览将实时更新。</p>
     </div>
 
 
-    <!-- Message box for loading, errors, or not found -->
     <div id="messageBox" class="message-box"></div>
 
     <div id="resultsContainer" class="results-container">
-        <!-- The results will be dynamically inserted here -->
-    </div>
+        </div>
 </div>
 
-<!-- The Modal -->
 <div id="detailsModal" class="modal">
   <div class="modal-content">
     <span class="close-button">&times;</span>
     <h3 id="modalFoodName"></h3>
     <p>(每100克)</p>
     <div id="modalNutrientContent">
-      <!-- Nutrient details will be populated here -->
-    </div>
+      </div>
     <p id="modalFootnote" class="modal-footnote" style="display: none;">*数据来源于网络</p>
   </div>
 </div>
@@ -620,6 +689,13 @@
         const saveProfileButton = document.getElementById('saveProfileButton');
         const updateProfileButton = document.getElementById('updateProfileButton');
         const loadProfileButton = document.getElementById('loadProfileButton');
+        const addCustomFoodButton = document.getElementById('addCustomFoodButton');
+        const customCarbsInput = document.getElementById('customCarbs');
+        const customProteinInput = document.getElementById('customProtein');
+        const customFatInput = document.getElementById('customFat');
+        const customCaloriesInput = document.getElementById('customCalories');
+        const microNutrientHeader = document.getElementById('microNutrientHeader');
+        const microResultListContainer = document.getElementById('microResultListContainer');
         
         const nutrientIds = {
             carbs: 1005, protein: 1003, fat: 1004, saturatedFat: 1258,
@@ -761,7 +837,6 @@
             
             showMessage('loading', '正在翻译并查询食物...');
             try {
-                // MODIFICATION: Calls our new backend function instead of Gemini directly
                 const englishFoodName = await translateFoodName(foodName);
 
                 const searchUrl = `${USDA_API_URL}/foods/search?api_key=${API_KEY}&query=${encodeURIComponent(englishFoodName)}`;
@@ -887,7 +962,7 @@
             document.getElementById('modalFoodName').textContent = foodItem.name;
             const contentDiv = document.getElementById('modalNutrientContent');
             const footnote = document.getElementById('modalFootnote');
-            footnote.style.display = 'none'; // Hide footnote initially
+            footnote.style.display = 'none';
             let networkDataUsed = false;
             let nutrientsToFetch = [];
 
@@ -896,8 +971,11 @@
                 if (nutrient && typeof nutrient.amount !== 'undefined') {
                     return `${nutrient.amount.toFixed(2)} ${nutrient.nutrient.unitName.toLowerCase()}`;
                 } else {
-                    nutrientsToFetch.push(name);
-                    return `<span data-nutrient-name="${name}">正在查询...</span>`;
+                     if(!foodItem.isCustom) { // Don't try to fetch for custom items
+                        nutrientsToFetch.push(name);
+                        return `<span data-nutrient-name="${name}">正在查询...</span>`;
+                     }
+                     return '未提供';
                 }
             };
             
@@ -936,44 +1014,44 @@
                 </ul>
                 <h4>其他信息</h4>
                 <ul>
-                    <li><span class="label">嘌呤含量:</span> <span class="value" data-nutrient-name="嘌呤含量">正在查询...</span></li>
-                    <li><span class="label">GI (血糖生成指数):</span> <span class="value" data-nutrient-name="GI (血糖生成指数)">正在查询...</span></li>
-                    <li><span class="label">GL (血糖负荷):</span> <span class="value" data-nutrient-name="GL (血糖负荷)">正在查询...</span></li>
+                    <li><span class="label">嘌呤含量:</span> <span class="value" data-nutrient-name="嘌呤含量">${foodItem.isCustom ? '未提供' : '正在查询...'}</span></li>
+                    <li><span class="label">GI (血糖生成指数):</span> <span class="value" data-nutrient-name="GI (血糖生成指数)">${foodItem.isCustom ? '未提供' : '正在查询...'}</span></li>
+                    <li><span class="label">GL (血糖负荷):</span> <span class="value" data-nutrient-name="GL (血糖负荷)">${foodItem.isCustom ? '未提供' : '正在查询...'}</span></li>
                 </ul>
             `;
             
             modal.style.display = 'block';
 
-            nutrientsToFetch.push('嘌呤含量', 'GI (血糖生成指数)', 'GL (血糖负荷)');
-            
-            // MODIFICATION: Call our new backend function instead of Gemini directly
-            const supplementaryData = await fetchSupplementaryData(foodItem.name, nutrientsToFetch);
+            if (!foodItem.isCustom) {
+                nutrientsToFetch.push('嘌呤含量', 'GI (血糖生成指数)', 'GL (血糖负荷)');
+                
+                const supplementaryData = await fetchSupplementaryData(foodItem.name, nutrientsToFetch);
 
-            for (const key in supplementaryData) {
-                const valueSpan = contentDiv.querySelector(`[data-nutrient-name="${key}"]`);
-                if (valueSpan) {
-                    const value = supplementaryData[key];
-                    if (value && value !== '网络查询中暂无' && value !== '查询失败') {
-                         valueSpan.innerHTML = `${value} <span class="network-source">*</span>`;
-                         networkDataUsed = true;
-                    } else {
-                        valueSpan.textContent = '网络查询中暂无';
+                for (const key in supplementaryData) {
+                    const valueSpan = contentDiv.querySelector(`[data-nutrient-name="${key}"]`);
+                    if (valueSpan) {
+                        const value = supplementaryData[key];
+                        if (value && value !== '网络查询中暂无' && value !== '查询失败') {
+                             valueSpan.innerHTML = `${value} <span class="network-source">*</span>`;
+                             networkDataUsed = true;
+                        } else {
+                            valueSpan.textContent = '网络查询中暂无';
+                        }
                     }
                 }
-            }
-            contentDiv.querySelectorAll('span[data-nutrient-name]').forEach(span => {
-                if(span.textContent === '正在查询...') {
-                    span.textContent = '网络查询中暂无';
-                }
-            });
+                contentDiv.querySelectorAll('span[data-nutrient-name]').forEach(span => {
+                    if(span.textContent === '正在查询...') {
+                        span.textContent = '网络查询中暂无';
+                    }
+                });
 
-            if (networkDataUsed) {
-                footnote.style.display = 'block';
+                if (networkDataUsed) {
+                    footnote.style.display = 'block';
+                }
             }
         }
         
         async function fetchSupplementaryData(foodName, nutrientsToFetch) {
-            // MODIFICATION: This now calls our secure Netlify function
             if (nutrientsToFetch.length === 0) return {};
             try {
                 const response = await fetch('/.netlify/functions/get-details', {
@@ -1003,7 +1081,6 @@
             }
         }
         
-        // ** FINAL, REVISED ALGORITHM **
         calculateIntakeButton.addEventListener('click', () => {
             if (selectedFoodItems.length === 0) return;
             
@@ -1019,8 +1096,7 @@
                 };
                 const tolerance = 0.05; // 5%
 
-                // Stage 1: Base Allocation
-                const baseAmount = 50; // Start with 50g of each food
+                const baseAmount = 50;
                 let amounts = new Array(selectedFoodItems.length).fill(baseAmount);
                 let current = { calories: 0, carbs: 0, protein: 0, fat: 0 };
                 
@@ -1034,7 +1110,6 @@
                 const maxIterations = 5000;
                 let iteration = 0;
 
-                // Stage 2: Fill to meet targets
                 const fillNutrient = (nutrient, nutrientTarget) => {
                     while (current[nutrient] < nutrientTarget && iteration < maxIterations) {
                         iteration++;
@@ -1043,7 +1118,6 @@
 
                         selectedFoodItems.forEach((food, index) => {
                            if (food.calories > 0) {
-                                // Efficiency is how much of the nutrient you get per calorie
                                 const efficiency = food[nutrient] / food.calories;
                                 if (efficiency > maxEfficiency) {
                                     maxEfficiency = efficiency;
@@ -1063,20 +1137,17 @@
                     }
                 };
                 
-                // Priority: Protein -> Carbs
                 fillNutrient('protein', target.protein * (1 - tolerance));
                 fillNutrient('carbs', target.carbs * (1 - tolerance));
                 
-                // Stage 3: Adjustment Phase
                 const adjustNutrient = (nutrient, nutrientTarget) => {
                     while (current[nutrient] > nutrientTarget * (1 + tolerance) && iteration < maxIterations) {
                         iteration++;
                         let foodToReduceIndex = -1;
                         let maxContent = -1;
 
-                        // Find the food with the most of the nutrient to reduce
                         amounts.forEach((amount, index) => {
-                            if (amount > baseAmount) { // Only reduce foods above the base amount
+                            if (amount > baseAmount) {
                                 const food = selectedFoodItems[index];
                                 if (food[nutrient] > maxContent) {
                                     maxContent = food[nutrient];
@@ -1093,7 +1164,7 @@
                             current.protein -= food.protein / 100;
                             current.fat -= food.fat / 100;
                         } else {
-                            break; // Cannot reduce further
+                            break;
                         }
                     }
                 };
@@ -1101,29 +1172,56 @@
                 adjustNutrient('protein', target.protein);
                 adjustNutrient('carbs', target.carbs);
 
-                // Populate the adjustment section
                 hideMessage();
                 populateAdjustmentSection(amounts);
             }, 50);
         });
 
         function populateAdjustmentSection(amounts) {
-            const adjustmentList = document.getElementById('adjustmentFoodList');
-            adjustmentList.innerHTML = '';
+            const adjustmentListContainer = document.getElementById('adjustmentFoodList');
+            // Clear previous content, keeping the header
+            const header = adjustmentListContainer.querySelector('.adjustment-grid-header');
+            adjustmentListContainer.innerHTML = '';
+            adjustmentListContainer.appendChild(header);
 
             amounts.forEach((amount, index) => {
                 const food = selectedFoodItems[index];
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span class="label">${food.originalChineseName || food.name}</span>
-                    <input type="number" class="adjustment-input" value="${Math.round(amount)}" data-index="${index}">
+                const row = document.createElement('div');
+                row.className = 'adjustment-grid-row';
+                
+                const baseAmount = 50;
+                let breakfastAmount = 0;
+                let lunchAmount = 0;
+                let dinnerAmount = 0;
+                
+                if (amount > baseAmount) {
+                    breakfastAmount = baseAmount;
+                    const remaining = amount - baseAmount;
+                    // Simple logic: split remaining between lunch and dinner
+                    lunchAmount = Math.round(remaining * 0.6);
+                    dinnerAmount = Math.round(remaining * 0.4);
+                } else {
+                    breakfastAmount = Math.round(amount);
+                }
+
+                row.innerHTML = `
+                    <div><span class="label">${food.originalChineseName || food.name}</span></div>
+                    <div><input type="number" class="adjustment-total" value="${Math.round(amount)}" data-index="${index}" readonly></div>
+                    <div><input type="number" class="adjustment-meal" value="${breakfastAmount}" data-index="${index}" data-meal="breakfast"></div>
+                    <div><input type="number" class="adjustment-meal" value="${lunchAmount}" data-index="${index}" data-meal="lunch"></div>
+                    <div><input type="number" class="adjustment-meal" value="${dinnerAmount}" data-index="${index}" data-meal="dinner"></div>
+                    <div><input type="number" class="adjustment-meal" value="0" data-index="${index}" data-meal="snack"></div>
                 `;
-                adjustmentList.appendChild(li);
+                adjustmentListContainer.appendChild(row);
             });
 
             // Add event listeners to new inputs
-            adjustmentList.querySelectorAll('.adjustment-input').forEach(input => {
-                input.addEventListener('input', updateProjectedNutrition);
+            adjustmentListContainer.querySelectorAll('.adjustment-meal').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const index = e.target.dataset.index;
+                    updateRowTotal(index);
+                    updateProjectedNutrition(); // Now call this after updating the total
+                });
             });
 
             // Initial calculation and display
@@ -1131,20 +1229,33 @@
             document.getElementById('manualAdjustmentSection').style.display = 'block';
         }
 
+        function updateRowTotal(index) {
+            const row = document.querySelector(`.adjustment-total[data-index="${index}"]`).closest('.adjustment-grid-row');
+            if (!row) return;
+
+            const breakfast = parseFloat(row.querySelector('[data-meal="breakfast"]').value) || 0;
+            const lunch = parseFloat(row.querySelector('[data-meal="lunch"]').value) || 0;
+            const dinner = parseFloat(row.querySelector('[data-meal="dinner"]').value) || 0;
+            const snack = parseFloat(row.querySelector('[data-meal="snack"]').value) || 0;
+            
+            const total = breakfast + lunch + dinner + snack;
+            row.querySelector('.adjustment-total').value = total.toFixed(0);
+        }
+
         function updateProjectedNutrition() {
             const overviewList = document.getElementById('adjustmentNutritionOverview');
-            const inputs = document.getElementById('adjustmentFoodList').querySelectorAll('.adjustment-input');
+            const totalInputs = document.querySelectorAll('.adjustment-total');
             let current = { calories: 0, carbs: 0, protein: 0, fat: 0 };
 
-            inputs.forEach(input => {
+            totalInputs.forEach(input => {
                 const index = parseInt(input.dataset.index);
-                const amount = parseFloat(input.value) || 0;
+                const totalAmount = parseFloat(input.value) || 0;
                 const food = selectedFoodItems[index];
 
-                current.calories += food.calories * (amount / 100);
-                current.carbs += food.carbs * (amount / 100);
-                current.protein += food.protein * (amount / 100);
-                current.fat += food.fat * (amount / 100);
+                current.calories += food.calories * (totalAmount / 100);
+                current.carbs += food.carbs * (totalAmount / 100);
+                current.protein += food.protein * (totalAmount / 100);
+                current.fat += food.fat * (totalAmount / 100);
             });
 
             const target = {
@@ -1227,9 +1338,65 @@
             }
         }
         
+        // --- Custom Food Logic ---
+        function updateCustomCalories() {
+            const carbs = parseFloat(customCarbsInput.value) || 0;
+            const protein = parseFloat(customProteinInput.value) || 0;
+            const fat = parseFloat(customFatInput.value) || 0;
+            
+            const calculatedCalories = (carbs * 4) + (protein * 4) + (fat * 9);
+            customCaloriesInput.value = calculatedCalories.toFixed(0);
+        }
+
+        customCarbsInput.addEventListener('input', updateCustomCalories);
+        customProteinInput.addEventListener('input', updateCustomCalories);
+        customFatInput.addEventListener('input', updateCustomCalories);
+        
+        addCustomFoodButton.addEventListener('click', () => {
+            const name = document.getElementById('customFoodName').value.trim();
+            const carbs = parseFloat(customCarbsInput.value) || 0;
+            const protein = parseFloat(customProteinInput.value) || 0;
+            const fat = parseFloat(customFatInput.value) || 0;
+            const calories = parseFloat(customCaloriesInput.value) || 0; // Read the auto-calculated value
+
+            if (!name) {
+                showMessage('error', '请输入食物名称。');
+                return;
+            }
+            if (carbs === 0 && protein === 0 && fat === 0) {
+                showMessage('error', '请至少输入一项宏量营养素数据。');
+                return;
+            }
+
+            const foodItem = {
+                fdcId: 'custom_' + Date.now(),
+                name: name,
+                originalChineseName: name,
+                carbs: carbs,
+                protein: protein,
+                fat: fat,
+                calories: calories,
+                isCustom: true,
+                fullNutrients: [ // Simulate nutrient profile for details modal
+                    { nutrient: { id: nutrientIds.carbs, unitName: 'g' }, amount: carbs },
+                    { nutrient: { id: nutrientIds.protein, unitName: 'g' }, amount: protein },
+                    { nutrient: { id: nutrientIds.fat, unitName: 'g' }, amount: fat }
+                ]
+            };
+            
+            addFoodToFavorites(foodItem);
+            
+            // Clear inputs
+            document.getElementById('customFoodName').value = '';
+            customCarbsInput.value = '';
+            customProteinInput.value = '';
+            customFatInput.value = '';
+            customCaloriesInput.value = '';
+        });
+        
         function addFoodToFavorites(foodItem) {
             let favorites = JSON.parse(localStorage.getItem('userFavoriteFoods')) || [];
-            if (favorites.some(fav => fav.fdcId === foodItem.fdcId)) {
+            if (favorites.some(fav => fav.name === foodItem.name)) {
                 showMessage('error', `"${foodItem.originalChineseName || foodItem.name}" 已在自选列表中。`);
                 return;
             }
@@ -1290,7 +1457,7 @@
             messageBox.style.display = 'block';
             setTimeout(() => {
                 if(messageBox.textContent === text) {
-                    messageBox.style.display = 'none';
+                    hideMessage();
                 }
             }, 3000);
         }
@@ -1299,7 +1466,6 @@
         }
 
         async function translateFoodName(chineseName) {
-            // MODIFICATION: This now calls our secure Netlify function
             try {
                 const response = await fetch('/.netlify/functions/translate', {
                     method: 'POST',
@@ -1317,16 +1483,24 @@
 
             } catch (error) {
                 console.error("Translate error:", error);
-                throw error; // Re-throw the error to be caught by handleSearch
+                throw error;
             }
         }
         
+        // --- Collapsible Logic ---
+        microNutrientHeader.addEventListener('click', () => {
+            microResultListContainer.classList.toggle('collapsed');
+            microNutrientHeader.classList.toggle('collapsed-header');
+        });
+
         // Initial Load
         loadUserProfile(false);
         renderFavoriteFoods();
+        // Set initial collapsed state
+        microResultListContainer.classList.add('collapsed');
+        microNutrientHeader.classList.add('collapsed-header');
     });
 </script>
 
 </body>
 </html>
-
